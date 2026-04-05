@@ -1,0 +1,1691 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vaibhav SecureTech Solution</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0
+    }
+
+    :root {
+      --navy: #0d2240;
+      --teal: #1b7a5e;
+      --teal-light: #e1f5ee;
+      --teal-mid: #1D9E75;
+      --accent: #0f6e56;
+      --bg: #f0f4fa;
+      --card: #ffffff;
+      --border: #dce3ef;
+      --text: #1a2535;
+      --muted: #6b7a96;
+      --danger: #c0392b;
+      --danger-bg: #fdf0ee;
+      --success: #0f6e56;
+      --success-bg: #e1f5ee;
+      --warning: #b07d2a;
+      --warning-bg: #fef9ec;
+      --font: 'Segoe UI', system-ui, sans-serif;
+      --mono: 'Consolas', 'Courier New', monospace;
+      --radius: 10px;
+      --radius-lg: 14px;
+      --shadow: 0 2px 12px rgba(13, 34, 64, .08);
+      --shadow-lg: 0 8px 32px rgba(13, 34, 64, .14);
+    }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh
+    }
+
+    /* HEADER */
+    .app-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 0 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      height: 64px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, .22);
+      position: sticky;
+      top: 0;
+      z-index: 100
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      flex: 1
+    }
+
+    .header-logo img {
+      width: 44px;
+      height: 44px;
+      object-fit: contain;
+      border-radius: 6px;
+      background: #fff;
+      padding: 3px
+    }
+
+    .header-title {
+      line-height: 1.2
+    }
+
+    .header-title span {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: .01em;
+      display: block
+    }
+
+    .header-title small {
+      font-size: .68rem;
+      opacity: .6;
+      font-weight: 400
+    }
+
+    /* TABS */
+    .tab-bar {
+      background: var(--card);
+      border-bottom: 1.5px solid var(--border);
+      display: flex;
+      padding: 0 1.5rem;
+      overflow-x: auto
+    }
+
+    .tab-btn {
+      padding: .85rem 1.3rem;
+      background: none;
+      border: none;
+      font-family: var(--font);
+      font-size: .87rem;
+      font-weight: 500;
+      color: var(--muted);
+      cursor: pointer;
+      border-bottom: 2.5px solid transparent;
+      transition: all .2s;
+      margin-bottom: -1.5px;
+      white-space: nowrap
+    }
+
+    .tab-btn.active {
+      color: var(--navy);
+      border-bottom-color: var(--teal-mid)
+    }
+
+    .tab-btn:hover:not(.active) {
+      color: var(--text)
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 1.5rem;
+      max-width: 1100px;
+      margin: 0 auto;
+      width: 100%
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh
+    }
+
+    /* CARDS */
+    .section-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1.5rem;
+      box-shadow: var(--shadow);
+      margin-bottom: 1.25rem
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem
+    }
+
+    /* FORMS */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: .75rem 1rem
+    }
+
+    .form-grid.three {
+      grid-template-columns: 1fr 1fr 1fr
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: .35rem
+    }
+
+    .form-group.full {
+      grid-column: 1/-1
+    }
+
+    label {
+      font-size: .75rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em
+    }
+
+    input[type=text],
+    input[type=number],
+    input[type=date],
+    textarea,
+    select {
+      padding: .6rem .85rem;
+      border: 1.5px solid var(--border);
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: .88rem;
+      color: var(--text);
+      background: var(--card);
+      outline: none;
+      transition: border-color .2s;
+      width: 100%
+    }
+
+    input:focus,
+    textarea:focus,
+    select:focus {
+      border-color: var(--teal-mid)
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 60px
+    }
+
+    /* ITEMS TABLE */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: .75rem
+    }
+
+    .items-table th {
+      background: var(--bg);
+      font-size: .73rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: .6rem .75rem;
+      text-align: left;
+      border-bottom: 1.5px solid var(--border)
+    }
+
+    .items-table td {
+      padding: .45rem .45rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle
+    }
+
+    .items-table td input {
+      border: 1px solid transparent;
+      padding: .42rem .55rem;
+      border-radius: 6px;
+      background: transparent
+    }
+
+    .items-table td input:focus {
+      border-color: var(--teal-mid);
+      background: var(--teal-light)
+    }
+
+    .sno {
+      font-family: var(--mono);
+      font-size: .78rem;
+      color: var(--muted);
+      text-align: center;
+      width: 34px
+    }
+
+    .desc-col {
+      min-width: 160px
+    }
+
+    .num-col {
+      width: 86px
+    }
+
+    .total-col {
+      width: 105px;
+      font-family: var(--mono);
+      font-size: .86rem;
+      font-weight: 600;
+      color: var(--navy);
+      text-align: right;
+      padding-right: .75rem !important
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: .95rem;
+      padding: .2rem .35rem;
+      border-radius: 4px;
+      transition: all .15s;
+      line-height: 1
+    }
+
+    .del-btn:hover {
+      color: var(--danger);
+      background: var(--danger-bg)
+    }
+
+    /* BUTTONS */
+    .btn {
+      padding: .55rem 1.1rem;
+      border-radius: var(--radius);
+      font-family: var(--font);
+      font-size: .84rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .18s;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem
+    }
+
+    .btn-navy {
+      background: var(--navy);
+      color: #fff
+    }
+
+    .btn-navy:hover {
+      background: #1a3a6e
+    }
+
+    .btn-teal {
+      background: var(--teal);
+      color: #fff
+    }
+
+    .btn-teal:hover {
+      background: var(--accent)
+    }
+
+    .btn-outline {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--text)
+    }
+
+    .btn-outline:hover {
+      border-color: var(--navy);
+      color: var(--navy)
+    }
+
+    .btn-danger-outline {
+      background: none;
+      border: 1.5px solid var(--border);
+      color: var(--muted)
+    }
+
+    .btn-danger-outline:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: var(--danger-bg)
+    }
+
+    .btn-google {
+      background: #4285F4;
+      color: #fff;
+      font-weight: 700
+    }
+
+    .btn-google:hover {
+      background: #3367d6
+    }
+
+    .btn-sm {
+      padding: .38rem .8rem;
+      font-size: .78rem
+    }
+
+    .btn-row {
+      display: flex;
+      gap: .6rem;
+      flex-wrap: wrap;
+      align-items: center
+    }
+
+    /* TOTALS */
+    .totals-box {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: .4rem;
+      padding-top: .75rem;
+      border-top: 1.5px solid var(--border)
+    }
+
+    .totals-row {
+      display: flex;
+      gap: 2rem;
+      justify-content: flex-end;
+      align-items: center;
+      min-width: 290px
+    }
+
+    .totals-label {
+      font-size: .83rem;
+      color: var(--muted)
+    }
+
+    .totals-value {
+      font-family: var(--mono);
+      font-size: .9rem;
+      font-weight: 600;
+      color: var(--text);
+      min-width: 105px;
+      text-align: right
+    }
+
+    .totals-row.grand {
+      border-top: 1.5px solid var(--border);
+      padding-top: .5rem;
+      margin-top: .2rem
+    }
+
+    .totals-row.grand .totals-label {
+      font-size: .95rem;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .totals-row.grand .totals-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    /* HISTORY */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    .history-table th {
+      background: var(--bg);
+      font-size: .73rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: .65rem 1rem;
+      text-align: left;
+      border-bottom: 1.5px solid var(--border)
+    }
+
+    .history-table td {
+      padding: .7rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .86rem
+    }
+
+    .history-table tr:hover td {
+      background: #fafbfe
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: .2rem .65rem;
+      border-radius: 20px;
+      font-size: .74rem;
+      font-weight: 600
+    }
+
+    .badge-quot {
+      background: #e6f1fb;
+      color: #185FA5
+    }
+
+    .badge-bill {
+      background: var(--teal-light);
+      color: var(--accent)
+    }
+
+    .badge-exp {
+      background: var(--warning-bg);
+      color: var(--warning)
+    }
+
+    /* SUMMARY CARDS */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.25rem
+    }
+
+    .sum-card {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--border);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow)
+    }
+
+    .sum-card .sum-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      color: var(--muted);
+      margin-bottom: .4rem;
+      font-weight: 600
+    }
+
+    .sum-card .sum-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--navy)
+    }
+
+    .sum-card.teal .sum-value {
+      color: var(--teal)
+    }
+
+    .sum-card.warn .sum-value {
+      color: var(--warning)
+    }
+
+    /* TABS */
+    .tab-content {
+      display: none
+    }
+
+    .tab-content.active {
+      display: block
+    }
+
+    /* GST TOGGLE */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: .75rem
+    }
+
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0
+    }
+
+    .toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 22px;
+      cursor: pointer;
+      transition: .25s
+    }
+
+    .toggle-slider:before {
+      content: '';
+      position: absolute;
+      height: 16px;
+      width: 16px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: .25s
+    }
+
+    .toggle input:checked+.toggle-slider {
+      background: var(--teal-mid)
+    }
+
+    .toggle input:checked+.toggle-slider:before {
+      transform: translateX(18px)
+    }
+
+    .toggle-label {
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--text)
+    }
+
+    /* SERIAL BADGE */
+    .serial-badge {
+      display: inline-flex;
+      align-items: center;
+      background: var(--navy);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: .8rem;
+      padding: .3rem .75rem;
+      border-radius: 20px;
+      letter-spacing: .04em;
+      margin-bottom: .5rem
+    }
+
+    /* MODAL */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 34, 64, .5);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem
+    }
+
+    .modal-bg.open {
+      display: flex
+    }
+
+    .modal {
+      background: var(--card);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 720px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg)
+    }
+
+    .modal-header {
+      padding: 1.2rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      background: var(--card);
+      z-index: 1
+    }
+
+    .modal-header h2 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .modal-body {
+      padding: 1.5rem
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: var(--muted);
+      line-height: 1
+    }
+
+    .close-btn:hover {
+      color: var(--danger)
+    }
+
+    /* PREVIEW */
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      padding-bottom: 1rem;
+      border-bottom: 2.5px solid var(--navy)
+    }
+
+    .preview-logo {
+      width: 56px;
+      height: 56px;
+      object-fit: contain;
+      flex-shrink: 0
+    }
+
+    .preview-company {
+      flex: 1
+    }
+
+    .preview-company h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .preview-company p {
+      font-size: .72rem;
+      color: var(--muted)
+    }
+
+    .preview-doc-info {
+      text-align: right
+    }
+
+    .preview-doc-type {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--navy)
+    }
+
+    .preview-doc-meta {
+      font-size: .82rem;
+      color: var(--muted);
+      margin-top: .2rem
+    }
+
+    .preview-client-box {
+      background: var(--bg);
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      margin-bottom: 1rem
+    }
+
+    .preview-client-box h4 {
+      font-size: .72rem;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: .35rem
+    }
+
+    .preview-client-box p {
+      font-size: .88rem;
+      line-height: 1.6
+    }
+
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem
+    }
+
+    .preview-table th {
+      background: var(--navy);
+      color: #fff;
+      font-size: .76rem;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      padding: .55rem .75rem;
+      text-align: left
+    }
+
+    .preview-table td {
+      padding: .55rem .75rem;
+      border-bottom: 1px solid var(--border);
+      font-size: .85rem
+    }
+
+    .preview-table tr:nth-child(even) td {
+      background: var(--bg)
+    }
+
+    .preview-totals {
+      display: flex;
+      justify-content: flex-end
+    }
+
+    .pt-wrap {
+      min-width: 260px
+    }
+
+    .pt-row {
+      display: flex;
+      justify-content: space-between;
+      padding: .35rem 0;
+      font-size: .85rem;
+      border-bottom: 1px solid var(--border)
+    }
+
+    .pt-row:last-child {
+      border-bottom: none;
+      font-weight: 700;
+      font-size: .95rem;
+      color: var(--navy);
+      border-top: 2px solid var(--navy);
+      padding-top: .5rem;
+      margin-top: .1rem
+    }
+
+    .preview-notes {
+      margin-top: .75rem;
+      font-size: .82rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      padding-top: .75rem;
+      line-height: 1.6
+    }
+
+    /* DRIVE STATUS */
+    .drive-status {
+      display: inline-flex;
+      align-items: center;
+      gap: .5rem;
+      font-size: .8rem;
+      padding: .35rem .85rem;
+      border-radius: 20px;
+      font-weight: 600
+    }
+
+    .drive-status.connected {
+      background: var(--success-bg);
+      color: var(--success)
+    }
+
+    .drive-status.disconnected {
+      background: #fff3cd;
+      color: #856404
+    }
+
+    /* EMPTY */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted)
+    }
+
+    .empty-state p {
+      font-size: .9rem
+    }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      bottom: 1.5rem;
+      right: 1.5rem;
+      z-index: 999;
+      background: var(--navy);
+      color: #fff;
+      padding: .75rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: .85rem;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      transition: opacity .3s, transform .3s;
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateY(0)
+    }
+
+    .toast.success {
+      background: var(--teal)
+    }
+
+    .toast.error {
+      background: var(--danger)
+    }
+
+    @media(max-width:640px) {
+
+      .form-grid,
+      .form-grid.three {
+        grid-template-columns: 1fr
+      }
+
+      .summary-grid {
+        grid-template-columns: 1fr
+      }
+
+      .main-content {
+        padding: 1rem .75rem
+      }
+
+      .app-header {
+        padding: 0 1rem
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header class="app-header">
+      <div class="header-logo">
+        <img id="header-logo-img" alt="VST Logo">
+        <div class="header-title">
+          <span>Vaibhav SecureTech Solution</span>
+          <small>Smart Security. Trusted Protection.</small>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:.75rem;">
+        <span class="drive-status disconnected" id="drive-badge">📁 Drive: Not Connected</span>
+        <button class="btn btn-google btn-sm" onclick="connectDrive()" id="drive-connect-btn">Connect Drive</button>
+      </div>
+    </header>
+
+    <nav class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('quotation',this)">📋 New Quotation / Bill</button>
+      <button class="tab-btn" onclick="switchTab('expense',this)">💸 Log Expense</button>
+      <button class="tab-btn" onclick="switchTab('history',this)">📁 All Records</button>
+    </nav>
+
+    <div class="main-content">
+
+      <!-- ═══ QUOTATION TAB ═══ -->
+      <div id="tab-quotation" class="tab-content active">
+        <div class="section-card">
+          <div class="section-title">🏢 Client & Document Details</div>
+          <div class="form-grid three">
+            <div class="form-group">
+              <label>Document Type</label>
+              <select id="doc-type" onchange="updateDocNum()">
+                <option value="Quotation">Quotation</option>
+                <option value="Invoice">Invoice / Bill</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Document Number (auto)</label>
+              <div style="display:flex;align-items:center;gap:.5rem">
+                <input type="text" id="doc-number" readonly style="background:#f7f9fd;cursor:default;">
+                <button class="btn btn-outline btn-sm" onclick="regenerateNum()" title="Regenerate">↻</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="doc-date">
+            </div>
+            <div class="form-group">
+              <label>Client Name</label>
+              <input type="text" id="client-name" placeholder="Client / Company Name">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="text" id="client-phone" placeholder="Mobile number">
+            </div>
+            <div class="form-group">
+              <label>Site / Location</label>
+              <input type="text" id="client-site" placeholder="Installation site">
+            </div>
+            <div class="form-group full">
+              <label>Address</label>
+              <textarea id="client-address" rows="2" placeholder="Full address of client"></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Notes / Terms & Conditions</label>
+              <textarea id="doc-notes" rows="2" placeholder="Payment terms, warranty, delivery, etc."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-card">
+          <div class="section-title">📦 Items / Products / Services</div>
+          <div style="overflow-x:auto">
+            <table class="items-table" id="items-table">
+              <thead>
+                <tr>
+                  <th class="sno">S No.</th>
+                  <th class="desc-col">Description</th>
+                  <th>Brand / Model</th>
+                  <th class="num-col" style="text-align:right">Qty</th>
+                  <th class="num-col" style="text-align:right">Unit Rs.</th>
+                  <th class="total-col">Total Rs.</th>
+                  <th style="width:36px"></th>
+                </tr>
+              </thead>
+              <tbody id="items-body"></tbody>
+            </table>
+          </div>
+          <div class="btn-row" style="margin-bottom:1rem">
+            <button class="btn btn-outline btn-sm" onclick="addItem()">+ Add Row</button>
+            <button class="btn btn-outline btn-sm" onclick="addPreset('EPABX System')">+ EPABX</button>
+            <button class="btn btn-outline btn-sm" onclick="addPreset('CCTV Camera')">+ CCTV</button>
+            <button class="btn btn-outline btn-sm" onclick="addPreset('DVR / NVR')">+ DVR/NVR</button>
+            <button class="btn btn-outline btn-sm" onclick="addPreset('Door Phone Unit')">+ Door Phone</button>
+            <button class="btn btn-outline btn-sm" onclick="addPreset('Installation & Cabling')">+ Installation</button>
+          </div>
+          <div class="totals-box">
+            <div class="totals-row">
+              <span class="totals-label">Subtotal</span>
+              <span class="totals-value" id="subtotal-val">Rs. 0.00</span>
+            </div>
+            <div class="totals-row" style="gap:.75rem">
+              <div class="toggle-row">
+                <label class="toggle"><input type="checkbox" id="gst-toggle" onchange="recalc()"><span
+                    class="toggle-slider"></span></label>
+                <span class="toggle-label">GST</span>
+                <select id="gst-rate" style="width:80px;padding:.3rem .4rem;font-size:.8rem" onchange="recalc()">
+                  <option value="18">18%</option>
+                  <option value="12">12%</option>
+                  <option value="5">5%</option>
+                  <option value="28">28%</option>
+                </select>
+              </div>
+              <span class="totals-value" id="gst-val" style="color:var(--muted)">—</span>
+            </div>
+            <div class="totals-row grand">
+              <span class="totals-label">Grand Total</span>
+              <span class="totals-value" id="grand-val">Rs. 0.00</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn btn-navy" onclick="previewDoc()">👁 Preview</button>
+          <button class="btn btn-teal" onclick="saveAndDownload()" id="save-download-btn">⬇ Save & Download PDF</button>
+          <button class="btn btn-google" onclick="saveAndDrive()" id="save-drive-btn">☁ Save to Google Drive</button>
+          <button class="btn btn-outline" onclick="clearForm()">🗑 New Form</button>
+        </div>
+      </div>
+
+      <!-- ═══ EXPENSE TAB ═══ -->
+      <div id="tab-expense" class="tab-content">
+        <div class="section-card">
+          <div class="section-title">💸 Log an Expense</div>
+          <div class="form-grid three">
+            <div class="form-group">
+              <label>Date</label>
+              <input type="date" id="exp-date">
+            </div>
+            <div class="form-group">
+              <label>Category</label>
+              <select id="exp-category">
+                <option>Travel / Fuel</option>
+                <option>Cable & Wiring</option>
+                <option>Tools / Equipment</option>
+                <option>Office Supplies</option>
+                <option>Labour / Contractor</option>
+                <option>Phone / Internet</option>
+                <option>Miscellaneous</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Amount (Rs.)</label>
+              <input type="number" id="exp-amount" placeholder="0.00" min="0" step="0.01">
+            </div>
+            <div class="form-group full">
+              <label>Description</label>
+              <textarea id="exp-desc" rows="2" placeholder="Brief description of expense"></textarea>
+            </div>
+            <div class="form-group full">
+              <label>Linked Client / Project (Optional)</label>
+              <input type="text" id="exp-client" placeholder="Client or project reference">
+            </div>
+          </div>
+          <div class="btn-row" style="margin-top:.75rem">
+            <button class="btn btn-navy" onclick="saveExpense()">Save Expense</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ HISTORY TAB ═══ -->
+      <div id="tab-history" class="tab-content">
+        <div class="summary-grid">
+          <div class="sum-card">
+            <div class="sum-label">Total Documents</div>
+            <div class="sum-value" id="sum-docs">0</div>
+          </div>
+          <div class="sum-card teal">
+            <div class="sum-label">Total Billed (Invoices)</div>
+            <div class="sum-value" id="sum-billed">Rs.0</div>
+          </div>
+          <div class="sum-card warn">
+            <div class="sum-label">Total Expenses</div>
+            <div class="sum-value" id="sum-exp">Rs.0</div>
+          </div>
+        </div>
+        <div class="section-card">
+          <div
+            style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.5rem">
+            <div class="section-title" style="margin:0">📁 All Records</div>
+            <div class="btn-row">
+              <select id="filter-type" onchange="renderHistory()" style="font-size:.82rem;padding:.35rem .6rem">
+                <option value="all">All Types</option>
+                <option value="Quotation">Quotations</option>
+                <option value="Invoice">Invoices</option>
+                <option value="Expense">Expenses</option>
+              </select>
+              <button class="btn btn-danger-outline btn-sm" onclick="clearAllData()">🗑 Clear All</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="history-table">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>No.</th>
+                  <th>Date</th>
+                  <th>Client / Description</th>
+                  <th style="text-align:right">Amount</th>
+                  <th style="text-align:center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="history-body"></tbody>
+            </table>
+          </div>
+          <div id="history-empty" class="empty-state" style="display:none">
+            <p>No records yet. Create a quotation, invoice, or log an expense to get started.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- PREVIEW MODAL -->
+  <div class="modal-bg" id="preview-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 id="modal-title">Document Preview</h2>
+        <div class="btn-row">
+          <button class="btn btn-teal btn-sm" onclick="downloadCurrentPreview()">⬇ Download PDF</button>
+          <button class="btn btn-google btn-sm" onclick="driveCurrentPreview()">☁ Save to Drive</button>
+          <button class="close-btn" onclick="closeModal()">×</button>
+        </div>
+      </div>
+      <div class="modal-body" id="preview-body"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const LOGO_PATH = "/logo.jpeg";
+    const LOGO_FORMAT = "JPEG";
+    let LOGOSRC = "";
+
+    function blobToDataURL(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function loadLogo() {
+      try {
+        const res = await fetch(LOGO_PATH);
+        const blob = await res.blob();
+        LOGOSRC = await blobToDataURL(blob);
+
+        document.getElementById("header-logo-img").src = LOGOSRC;
+      } catch (err) {
+        console.error("Logo load failed:", err);
+        document.getElementById("header-logo-img").src = LOGO_PATH;
+      }
+    }
+
+    // ═══════════════════════════════════════
+    // CONFIG & STATE
+    // ═══════════════════════════════════════
+    const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'; // Replace with your OAuth Client ID
+    const DRIVE_FOLDER_NAME_QUOT = 'Quotation';
+    const DRIVE_FOLDER_NAME_BILL = 'Bill';
+
+    let records = JSON.parse(localStorage.getItem('vst_records') || '[]');
+    let counters = JSON.parse(localStorage.getItem('vst_counters') || '{"Q":1,"INV":1,"EXP":1}');
+    let gapi_loaded = false;
+    let gtoken = null;
+    let currentPreviewData = null;
+    let itemCount = 0;
+
+    function saveRecords() { localStorage.setItem('vst_records', JSON.stringify(records)); }
+    function saveCounters() { localStorage.setItem('vst_counters', JSON.stringify(counters)); }
+
+    // ═══════════════════════════════════════
+    // TOAST
+    // ═══════════════════════════════════════
+    function toast(msg, type = '') {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.className = 'toast show ' + type;
+      setTimeout(() => { el.className = 'toast'; }, 3200);
+    }
+
+    // ═══════════════════════════════════════
+    // INIT
+    // ═══════════════════════════════════════
+    function initApp() {
+      document.getElementById('doc-date').value = today();
+      document.getElementById('exp-date').value = today();
+      updateDocNum();
+      if (!document.getElementById('items-body').children.length) addItem();
+    }
+    function today() { return new Date().toISOString().split('T')[0]; }
+
+    function genDocNum(type) {
+      const d = new Date();
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      if (type === 'Invoice') return `VST-INV-${y}${m}-${String(counters.INV).padStart(3, '0')}`;
+      return `VST-Q-${y}${m}-${String(counters.Q).padStart(3, '0')}`;
+    }
+    function updateDocNum() {
+      const t = document.getElementById('doc-type').value;
+      document.getElementById('doc-number').value = genDocNum(t);
+    }
+    function regenerateNum() { updateDocNum(); }
+
+    // ═══════════════════════════════════════
+    // TABS
+    // ═══════════════════════════════════════
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + name).classList.add('active');
+      btn.classList.add('active');
+      if (name === 'history') renderHistory();
+    }
+
+    // ═══════════════════════════════════════
+    // ITEMS
+    // ═══════════════════════════════════════
+    function addItem(desc = '', brand = '', qty = 1, price = 0) {
+      itemCount++;
+      const tbody = document.getElementById('items-body');
+      const tr = document.createElement('tr');
+      tr.dataset.id = itemCount;
+      tr.innerHTML = `
+    <td class="sno">${tbody.children.length + 1}</td>
+    <td class="desc-col"><input type="text" value="${desc}" placeholder="Description / product name" style="width:100%"></td>
+    <td><input type="text" value="${brand}" placeholder="Brand / Model" style="width:100%"></td>
+    <td class="num-col"><input type="number" value="${qty}" min="1" style="width:100%;text-align:right" onchange="recalc()"></td>
+    <td class="num-col"><input type="number" value="${price}" min="0" step="0.01" style="width:100%;text-align:right" onchange="recalc()"></td>
+    <td class="total-col" id="rt-${itemCount}">Rs. 0.00</td>
+    <td><button class="del-btn" onclick="removeItem(this)">✕</button></td>`;
+      tr.querySelectorAll('input[type=text]').forEach(i => i.addEventListener('input', recalc));
+      tbody.appendChild(tr);
+      recalc(); renumberRows();
+    }
+    function addPreset(d) { addItem(d, '', 1, 0); }
+    function removeItem(btn) { btn.closest('tr').remove(); renumberRows(); recalc(); }
+    function renumberRows() { document.querySelectorAll('#items-body tr .sno').forEach((td, i) => td.textContent = i + 1); }
+
+    function getItems() {
+      return Array.from(document.querySelectorAll('#items-body tr')).map(tr => {
+        const ins = tr.querySelectorAll('input');
+        const qty = parseFloat(ins[2].value) || 0, price = parseFloat(ins[3].value) || 0;
+        return { desc: ins[0].value, brand: ins[1].value, qty, price, total: qty * price };
+      });
+    }
+    function recalc() {
+      const items = getItems();
+      items.forEach((item, i) => {
+        const id = document.querySelectorAll('#items-body tr')[i]?.dataset?.id;
+        const el = document.getElementById('rt-' + id);
+        if (el) el.textContent = 'Rs. ' + item.total.toFixed(2);
+      });
+      const sub = items.reduce((a, i) => a + i.total, 0);
+      const gstOn = document.getElementById('gst-toggle').checked;
+      const gstRate = parseFloat(document.getElementById('gst-rate').value) || 18;
+      const gst = gstOn ? sub * gstRate / 100 : 0;
+      document.getElementById('subtotal-val').textContent = 'Rs. ' + sub.toFixed(2);
+      document.getElementById('gst-val').textContent = gstOn ? 'Rs. ' + gst.toFixed(2) : '—';
+      document.getElementById('grand-val').textContent = 'Rs. ' + (sub + gst).toFixed(2);
+    }
+
+    // ═══════════════════════════════════════
+    // COLLECT FORM
+    // ═══════════════════════════════════════
+    function collectFormData() {
+      const items = getItems();
+      const sub = items.reduce((a, i) => a + i.total, 0);
+      const gstOn = document.getElementById('gst-toggle').checked;
+      const gstRate = parseFloat(document.getElementById('gst-rate').value) || 18;
+      const gst = gstOn ? sub * gstRate / 100 : 0;
+      return {
+        type: document.getElementById('doc-type').value,
+        number: document.getElementById('doc-number').value.trim() || 'N/A',
+        date: document.getElementById('doc-date').value,
+        clientName: document.getElementById('client-name').value.trim(),
+        clientPhone: document.getElementById('client-phone').value.trim(),
+        clientSite: document.getElementById('client-site').value.trim(),
+        clientAddress: document.getElementById('client-address').value.trim(),
+        notes: document.getElementById('doc-notes').value.trim(),
+        items, sub, gstOn, gstRate, gst, grand: sub + gst,
+        savedAt: new Date().toISOString()
+      };
+    }
+
+    // ═══════════════════════════════════════
+    // PREVIEW
+    // ═══════════════════════════════════════
+    function previewDoc() {
+      const data = collectFormData(); currentPreviewData = data;
+      document.getElementById('modal-title').textContent = data.type + ' Preview — ' + data.number;
+      document.getElementById('preview-body').innerHTML = buildPreviewHTML(data);
+      document.getElementById('preview-modal').classList.add('open');
+    }
+    function closeModal() { document.getElementById('preview-modal').classList.remove('open'); }
+    document.getElementById('preview-modal').addEventListener('click', function (e) { if (e.target === this) closeModal(); });
+
+    function buildPreviewHTML(d) {
+      const rows = d.items.map((it, i) => `<tr>
+    <td style="text-align:center;color:var(--muted);font-size:.78rem">${i + 1}</td>
+    <td>${it.desc || '—'}</td><td>${it.brand || '—'}</td>
+    <td style="text-align:center">${it.qty}</td>
+    <td style="text-align:right">Rs. ${it.price.toFixed(2)}</td>
+    <td style="text-align:right;font-weight:700">Rs. ${it.total.toFixed(2)}</td>
+  </tr>`).join('');
+      return `
+    <div class="preview-header">
+      <img src="${LOGOSRC}" class="preview-logo" alt="VST">
+      <div class="preview-company">
+        <h2>Vaibhav SecureTech Solution</h2>
+        <p>Smart Security. Trusted Protection.</p>
+        <p style="font-size:.7rem;color:var(--muted)">EPABX | CCTV | Door Phone</p>
+      </div>
+      <div class="preview-doc-info">
+        <div class="preview-doc-type">${d.type.toUpperCase()}</div>
+        <div class="preview-doc-meta">No: <b>${d.number}</b><br>Date: ${formatDate(d.date)}</div>
+      </div>
+    </div>
+    <div class="preview-client-box">
+      <h4>Bill To / Client</h4>
+      <p><b>${d.clientName || '—'}</b>${d.clientPhone ? ' &nbsp;·&nbsp; ' + d.clientPhone : ''}<br>
+      ${d.clientSite ? 'Site: ' + d.clientSite + '<br>' : ''}${d.clientAddress || ''}</p>
+    </div>
+    <table class="preview-table">
+      <thead><tr><th>S No.</th><th>Description</th><th>Brand/Model</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Rs.</th><th style="text-align:right">Total Rs.</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="preview-totals"><div class="pt-wrap">
+      <div class="pt-row"><span>Subtotal</span><span>Rs. ${d.sub.toFixed(2)}</span></div>
+      ${d.gstOn ? `<div class="pt-row"><span>GST (${d.gstRate}%)</span><span>Rs. ${d.gst.toFixed(2)}</span></div>` : ''}
+      <div class="pt-row"><span>Grand Total</span><span>Rs. ${d.grand.toFixed(2)}</span></div>
+    </div></div>
+    ${d.notes ? `<div class="preview-notes"><b>Terms & Notes:</b><br>${d.notes}</div>` : ''}`;
+    }
+    function formatDate(s) { if (!s) return '—'; const d = new Date(s + 'T00:00:00'); return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }); }
+
+    // ═══════════════════════════════════════
+    // PDF GENERATION
+    // ═══════════════════════════════════════
+    function generatePDF(data) {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const W = doc.internal.pageSize.getWidth();
+      const navy = [13, 34, 64], teal = [27, 122, 94], gray = [100, 110, 130], lightGray = [240, 243, 248];
+
+      // Header band
+      doc.setFillColor(...navy); doc.rect(0, 0, W, 40, 'F');
+
+      // Logo
+      try {
+        if (LOGOSRC) {
+          doc.addImage(LOGOSRC, LOGO_FORMAT, 11, 5, 28, 28);
+        }
+      } catch (e) {
+        console.error("Logo add failed:", e);
+      }
+
+      // Company name
+      doc.setTextColor(255, 255, 255); doc.setFontSize(14); doc.setFont('helvetica', 'bold');
+      doc.text('Vaibhav SecureTech Solution', 43, 15);
+      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 210, 200);
+      doc.text('Smart Security. Trusted Protection.', 43, 21);
+      doc.text('EPABX | CCTV | Door Phone', 43, 27);
+      doc.text('v.securetechsolution@gmail.com', 43, 33);
+
+      // Doc type + number
+      doc.setTextColor(255, 255, 255); doc.setFontSize(13); doc.setFont('helvetica', 'bold');
+      doc.text(data.type.toUpperCase(), W - 12, 15, { align: 'right' });
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(180, 210, 200);
+      doc.text('No: ' + data.number, W - 12, 22, { align: 'right' });
+      doc.text('Date: ' + formatDate(data.date), W - 12, 28, { align: 'right' });
+
+      // Client box
+      // 1. Calculate how many lines of text we have to determine box height
+      let lines = [];
+      if (data.clientAddress) { lines = doc.splitTextToSize(data.clientAddress, W - 50); }
+
+      let boxHeight = 22; // Base height for title and client name
+      if (data.clientPhone) boxHeight += 5;
+      if (data.clientSite) boxHeight += 5;
+      if (lines.length > 0) boxHeight += (lines.length * 4); // roughly 4mm per line of address
+
+      // 2. Draw the background box using the calculated height
+      doc.setFillColor(...lightGray); doc.roundedRect(12, 46, W - 24, boxHeight, 3, 3, 'F');
+
+      // 3. Print the text inside
+      doc.setTextColor(...gray); doc.setFontSize(7); doc.setFont('helvetica', 'bold');
+      doc.text('BILL TO / CLIENT', 18, 53);
+      doc.setTextColor(...navy); doc.setFontSize(10); doc.setFont('helvetica', 'bold');
+      doc.text(data.clientName || '—', 18, 60);
+
+      doc.setFontSize(8.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(...gray);
+      let cy = 66;
+      if (data.clientPhone) { doc.text('Phone: ' + data.clientPhone, 18, cy); cy += 5; }
+      if (data.clientSite) { doc.text('Site: ' + data.clientSite, 18, cy); cy += 5; }
+      if (lines.length > 0) { doc.text(lines, 18, cy); cy += (lines.length * 4); }
+
+      // 4. Important: Adjust the starting Y position of the items table so it doesn't overlap the box!
+      let tableStartY = 46 + boxHeight + 6;
+
+      // Items table
+      doc.autoTable({
+        startY: tableStartY,
+        head: [['S No.', 'Description', 'Brand / Model', 'Qty', 'Unit Price (Rs.)', 'Total (Rs.)']],
+        body: data.items.map((it, i) => [i + 1, it.desc || '—', it.brand || '—', it.qty, 'Rs.' + it.price.toFixed(2), 'Rs.' + it.total.toFixed(2)]),
+        styles: { fontSize: 8.5, font: 'helvetica', cellPadding: 3 },
+        headStyles: { fillColor: navy, textColor: [255, 255, 255], fontStyle: 'bold', fontSize: 8 },
+        alternateRowStyles: { fillColor: [248, 250, 253] },
+        columnStyles: { 0: { cellWidth: 15, halign: 'center' }, 3: { cellWidth: 14, halign: 'center' }, 4: { cellWidth: 27, halign: 'right' }, 5: { cellWidth: 27, halign: 'right', fontStyle: 'bold' } },
+        margin: { left: 12, right: 12 }
+      });
+
+      let y = doc.lastAutoTable.finalY + 8;
+      const totW = 76;
+
+      // Totals block
+      doc.setFillColor(...lightGray);
+      doc.roundedRect(W - 12 - totW, y, totW, data.gstOn ? 28 : 20, 3, 3, 'F');
+      y += 7;
+      doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.setTextColor(...gray);
+      doc.text('Subtotal:', W - 12 - totW + 5, y);
+      doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+      doc.text('Rs.' + data.sub.toFixed(2), W - 14, y, { align: 'right' });
+      if (data.gstOn) {
+        y += 7; doc.setFont('helvetica', 'normal'); doc.setTextColor(...gray);
+        doc.text('GST (' + data.gstRate + '%):', W - 12 - totW + 5, y);
+        doc.setFont('helvetica', 'bold'); doc.setTextColor(...navy);
+        doc.text('Rs.' + data.gst.toFixed(2), W - 14, y, { align: 'right' });
+      }
+      y += 7;
+      doc.setFillColor(...teal); doc.roundedRect(W - 12 - totW, y, totW, 11, 2, 2, 'F');
+      doc.setTextColor(255, 255, 255); doc.setFontSize(9.5); doc.setFont('helvetica', 'bold');
+      doc.text('GRAND TOTAL:', W - 12 - totW + 5, y + 7);
+      doc.text('Rs.' + data.grand.toFixed(2), W - 14, y + 7, { align: 'right' });
+      y += 17;
+
+      // Notes
+      if (data.notes) {
+        const nl = doc.splitTextToSize(data.notes, W - 40);
+        const nh = nl.length * 5 + 12;
+        doc.setFillColor(255, 253, 240); doc.roundedRect(12, y, W - 24, nh, 2, 2, 'F');
+        doc.setTextColor(...gray); doc.setFontSize(7); doc.setFont('helvetica', 'bold'); doc.text('TERMS & NOTES', 18, y + 6);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(60, 70, 90); doc.text(nl, 18, y + 12);
+      }
+
+      // Footer
+      const pages = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pages; i++) {
+        doc.setPage(i); doc.setFillColor(...navy); doc.rect(0, 285, W, 12, 'F');
+        doc.setTextColor(180, 200, 220); doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+        doc.text('Vaibhav SecureTech Solution  |  Smart Security. Trusted Protection.  |  v.securetechsolution@gmail.com', 12, 291);
+        doc.text('Page ' + i + ' of ' + pages, W - 12, 291, { align: 'right' });
+      }
+      return doc;
+    }
+
+    // ═══════════════════════════════════════
+    // SAVE & DOWNLOAD
+    // ═══════════════════════════════════════
+    function bumpCounter(data) {
+      if (data.type === 'Invoice') counters.INV++;
+      else counters.Q++;
+      saveCounters();
+    }
+
+    function saveRecord(data) {
+      const idx = records.findIndex(r => r.number === data.number);
+      if (idx >= 0) records[idx] = data; else records.unshift(data);
+      saveRecords();
+    }
+
+    function saveAndDownload() {
+      const data = collectFormData();
+      if (!data.clientName) { toast('Please enter client name', 'error'); return; }
+      saveRecord(data); bumpCounter(data); updateDocNum();
+      const doc = generatePDF(data);
+      doc.save(data.type + '-' + data.number + '.pdf');
+      toast('✅ Saved & downloaded: ' + data.number, 'success');
+    }
+
+    function downloadCurrentPreview() {
+      if (!currentPreviewData) return;
+      const doc = generatePDF(currentPreviewData);
+      doc.save(currentPreviewData.type + '-' + currentPreviewData.number + '.pdf');
+      toast('⬇ PDF downloaded', 'success');
+    }
+
+    // ═══════════════════════════════════════
+    // GOOGLE DRIVE INTEGRATION
+    // ═══════════════════════════════════════
+    function loadGAPI() {
+      return new Promise((resolve) => {
+        if (window.google && window.google.accounts) { resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://accounts.google.com/gsi/client';
+        s.onload = resolve; document.head.appendChild(s);
+      });
+    }
+
+    async function connectDrive() {
+      if (GOOGLE_CLIENT_ID === 'YOUR_GOOGLE_CLIENT_ID') {
+        toast('⚠ Setup needed: Replace YOUR_GOOGLE_CLIENT_ID in the code. See instructions below.', 'error');
+        showSetupInstructions(); return;
+      }
+      try {
+        await loadGAPI();
+        const client = google.accounts.oauth2.initTokenClient({
+          client_id: GOOGLE_CLIENT_ID,
+          scope: 'https://www.googleapis.com/auth/drive.file',
+          callback: (resp) => {
+            if (resp.error) { toast('Drive connection failed: ' + resp.error, 'error'); return; }
+            gtoken = resp.access_token;
+            document.getElementById('drive-badge').className = 'drive-status connected';
+            document.getElementById('drive-badge').textContent = '✅ Drive: Connected';
+            document.getElementById('drive-connect-btn').textContent = '✓ Connected';
+            document.getElementById('drive-connect-btn').style.background = '#0f6e56';
+            toast('✅ Google Drive connected!', 'success');
+          }
+        });
+        client.requestAccessToken();
+      } catch (e) { toast('Error connecting Drive: ' + e.message, 'error'); }
+    }
+
+    async function uploadToDrive(pdfBlob, filename, folderName) {
+      if (!gtoken) { await connectDrive(); if (!gtoken) return false; }
+      // Find or create folder
+      let folderId = await findOrCreateFolder(folderName);
+      if (!folderId) return false;
+      // Upload file
+      const meta = { name: filename, parents: [folderId] };
+      const form = new FormData();
+      form.append('metadata', new Blob([JSON.stringify(meta)], { type: 'application/json' }));
+      form.append('file', pdfBlob);
+      const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + gtoken }, body: form
+      });
+      return res.ok;
+    }
+
+    async function findOrCreateFolder(name) {
+      // Search
+      const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)`,
+        { headers: { Authorization: 'Bearer ' + gtoken } });
+      const data = await res.json();
+      if (data.files && data.files.length > 0) return data.files[0].id;
+      // Create
+      const cres = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST', headers: { Authorization: 'Bearer ' + gtoken, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder' })
+      });
+      const cdata = await cres.json();
+      return cdata.id;
+    }
+
+    async function saveAndDrive() {
+      const data = collectFormData();
+      if (!data.clientName) { toast('Please enter client name', 'error'); return; }
+      if (!gtoken) { toast('Connect Google Drive first', 'error'); await connectDrive(); return; }
+      const btn = document.getElementById('save-drive-btn');
+      btn.textContent = '☁ Uploading...'; btn.disabled = true;
+      try {
+        saveRecord(data); bumpCounter(data); updateDocNum();
+        const doc = generatePDF(data);
+        const pdfBlob = doc.output('blob');
+        const folder = data.type === 'Invoice' ? DRIVE_FOLDER_NAME_BILL : DRIVE_FOLDER_NAME_QUOT;
+        const filename = data.type + '-' + data.number + '.pdf';
+        const ok = await uploadToDrive(pdfBlob, filename, folder);
+        if (ok) { toast('✅ Saved to Drive / ' + folder + '/' + filename, 'success'); }
+        else { toast('Drive upload failed. Check permissions.', 'error'); }
+      } catch (e) { toast('Error: ' + e.message, 'error'); }
+      btn.textContent = '☁ Save to Google Drive'; btn.disabled = false;
+    }
+
+    async function driveCurrentPreview() {
+      if (!currentPreviewData) return;
+      if (!gtoken) { toast('Connect Google Drive first', 'error'); await connectDrive(); return; }
+      try {
+        const doc = generatePDF(currentPreviewData);
+        const pdfBlob = doc.output('blob');
+        const folder = currentPreviewData.type === 'Invoice' ? DRIVE_FOLDER_NAME_BILL : DRIVE_FOLDER_NAME_QUOT;
+        const filename = currentPreviewData.type + '-' + currentPreviewData.number + '.pdf';
+        const ok = await uploadToDrive(pdfBlob, filename, folder);
+        toast(ok ? '✅ Saved to Drive: ' + folder + '/' + filename : 'Upload failed', '');
+      } catch (e) { toast('Error: ' + e.message, 'error'); }
+    }
+
+    function showSetupInstructions() {
+      alert(`Google Drive Setup Instructions:
+
+1. Go to: https://console.cloud.google.com
+2. Create a new project (e.g. "VST Portal")
+3. Enable "Google Drive API"
+4. Go to APIs & Services > OAuth Consent Screen
+   - Choose "External", fill in app name
+5. Go to Credentials > Create OAuth 2.0 Client ID
+   - Type: Web Application
+   - Authorized JS origins: https://your-vercel-app.vercel.app
+   - Also add: http://localhost (for testing)
+6. Copy the Client ID
+7. In this index.html, find: const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID'
+   Replace with your actual Client ID
+8. Redeploy to Vercel
+
+That's it! One-time setup only.`);
+    }
+
+    // ═══════════════════════════════════════
+    // EXPENSE
+    // ═══════════════════════════════════════
+    function saveExpense() {
+      const d = {
+        type: 'Expense', number: 'EXP-' + Date.now(),
+        date: document.getElementById('exp-date').value,
+        clientName: document.getElementById('exp-client').value.trim(),
+        desc: document.getElementById('exp-desc').value.trim(),
+        category: document.getElementById('exp-category').value,
+        grand: parseFloat(document.getElementById('exp-amount').value) || 0,
+        savedAt: new Date().toISOString()
+      };
+      if (!d.desc) { toast('Please enter a description', 'error'); return; }
+      if (!d.grand) { toast('Please enter an amount', 'error'); return; }
+      records.unshift(d); saveRecords();
+      document.getElementById('exp-desc').value = '';
+      document.getElementById('exp-amount').value = '';
+      document.getElementById('exp-client').value = '';
+      toast('✅ Expense saved: Rs.' + d.grand.toFixed(2), 'success');
+    }
+
+    // ═══════════════════════════════════════
+    // HISTORY
+    // ═══════════════════════════════════════
+    function renderHistory() {
+      const filter = document.getElementById('filter-type')?.value || 'all';
+      const filtered = filter === 'all' ? records : records.filter(r => r.type === filter);
+      const tbody = document.getElementById('history-body'); tbody.innerHTML = '';
+      const billed = records.filter(r => r.type === 'Invoice').reduce((a, r) => a + r.grand, 0);
+      const exps = records.filter(r => r.type === 'Expense').reduce((a, r) => a + r.grand, 0);
+      const docs = records.filter(r => r.type !== 'Expense').length;
+      document.getElementById('sum-docs').textContent = docs;
+      document.getElementById('sum-billed').textContent = 'Rs.' + billed.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      document.getElementById('sum-exp').textContent = 'Rs.' + exps.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+      if (!filtered.length) { document.getElementById('history-empty').style.display = 'block'; return; }
+      document.getElementById('history-empty').style.display = 'none';
+      filtered.forEach(r => {
+        const tr = document.createElement('tr');
+        const bc = r.type === 'Quotation' ? 'badge-quot' : r.type === 'Invoice' ? 'badge-bill' : 'badge-exp';
+        const isDoc = r.type !== 'Expense';
+        const desc = isDoc ? (r.clientName || '—') : (r.desc || '—') + (r.category ? ' (' + r.category + ')' : '');
+        const rdStr = JSON.stringify(r).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+        tr.innerHTML = `
+      <td><span class="badge ${bc}">${r.type}</span></td>
+      <td style="font-family:var(--mono);font-size:.8rem">${r.number || '—'}</td>
+      <td style="color:var(--muted);font-size:.82rem">${formatDate(r.date)}</td>
+      <td>${desc}${r.clientSite ? '<br><span style="color:var(--muted);font-size:.76rem">' + r.clientSite + '</span>' : ''}</td>
+      <td style="text-align:right;font-family:var(--mono);font-weight:700;color:var(--navy)">Rs.${(r.grand || 0).toFixed(2)}</td>
+      <td style="text-align:center">
+        <div class="btn-row" style="justify-content:center">
+          ${isDoc ? `<button class="btn btn-outline btn-sm" onclick="previewRecord(records.find(x=>x.number==='${r.number}'))">View</button>` : ''}
+          ${isDoc ? `<button class="btn btn-teal btn-sm" onclick="downloadRecord(records.find(x=>x.number==='${r.number}'))">PDF</button>` : ''}
+          <button class="btn btn-danger-outline btn-sm" onclick="deleteRecord('${r.number}')">✕</button>
+        </div>
+      </td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function previewRecord(data) {
+      if (!data) return;
+      currentPreviewData = data;
+      document.getElementById('modal-title').textContent = data.type + ' — ' + data.number;
+      document.getElementById('preview-body').innerHTML = buildPreviewHTML(data);
+      document.getElementById('preview-modal').classList.add('open');
+    }
+    function downloadRecord(data) { if (!data) return; const doc = generatePDF(data); doc.save(data.type + '-' + data.number + '.pdf'); toast('PDF downloaded', 'success'); }
+    function deleteRecord(num) { if (!confirm('Delete this record?')) return; records = records.filter(r => r.number !== num); saveRecords(); renderHistory(); toast('Record deleted'); }
+    function clearAllData() { if (!confirm('Clear ALL records? This cannot be undone.')) return; records = []; saveRecords(); renderHistory(); toast('All records cleared'); }
+
+    // ═══════════════════════════════════════
+    // CLEAR FORM
+    // ═══════════════════════════════════════
+    function clearForm() {
+      ['client-name', 'client-phone', 'client-site', 'client-address', 'doc-notes'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('items-body').innerHTML = ''; itemCount = 0;
+      document.getElementById('doc-date').value = today();
+      document.getElementById('gst-toggle').checked = false;
+      updateDocNum(); addItem(); recalc();
+      toast('Form cleared');
+    }
+
+    (async function () {
+      await loadLogo();
+      initApp();
+      renderHistory();
+    })();
+  </script>
+</body>
+
+</html>
