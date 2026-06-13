@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VST Data Recovery Tool</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#f0f4fa;color:#1a2535;padding:2rem}
+h1{color:#0d2240;margin-bottom:.5rem}
+.sub{color:#6b7a96;font-size:.9rem;margin-bottom:2rem}
+.card{background:#fff;border-radius:12px;border:1px solid #dce3ef;padding:1.5rem;margin-bottom:1rem;box-shadow:0 2px 12px rgba(13,34,64,.08)}
+.card h2{font-size:1rem;font-weight:700;color:#0d2240;margin-bottom:.75rem}
+.stat{display:inline-block;background:#e1f5ee;color:#0f6e56;font-weight:700;padding:.3rem .8rem;border-radius:20px;font-size:.85rem;margin:.2rem}
+.stat.warn{background:#fdf0ee;color:#c0392b}
+.stat.info{background:#e6f1fb;color:#185FA5}
+.btn{padding:.6rem 1.2rem;border-radius:8px;border:none;font-size:.87rem;font-weight:600;cursor:pointer;font-family:inherit;margin:.3rem}
+.btn-green{background:#1b7a5e;color:#fff}.btn-green:hover{background:#0f6e56}
+.btn-navy{background:#0d2240;color:#fff}.btn-navy:hover{background:#1a3a6e}
+.btn-red{background:#c0392b;color:#fff}.btn-red:hover{opacity:.85}
+.btn-orange{background:#b07d2a;color:#fff}
+pre{background:#f5f7fb;border:1px solid #dce3ef;border-radius:8px;padding:1rem;font-size:.75rem;overflow-x:auto;max-height:300px;overflow-y:auto;white-space:pre-wrap;word-break:break-all}
+.found{color:#0f6e56;font-weight:700}
+.notfound{color:#c0392b;font-weight:700}
+.row{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:.75rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{background:#0d2240;color:#fff;padding:.5rem .75rem;text-align:left}
+td{padding:.5rem .75rem;border-bottom:1px solid #dce3ef}
+tr:hover td{background:#f5f7fb}
+.amount{font-family:monospace;font-weight:600}
+.doc-type{display:inline-block;padding:.15rem .5rem;border-radius:20px;font-size:.72rem;font-weight:600}
+.t-quot{background:#e6f1fb;color:#185FA5}
+.t-inv{background:#e1f5ee;color:#0f6e56}
+.t-exp{background:#fef9ec;color:#b07d2a}
+</style>
+</head>
+<body>
+
+<h1>🔍 VST Data Recovery Tool</h1>
+<p class="sub">Open this file in the SAME browser and SAME device where you used the VST app. It will scan all localStorage for your records.</p>
+
+<div class="card">
+  <h2>Step 1 — Scan for Data</h2>
+  <div class="row">
+    <button class="btn btn-navy" onclick="scanAll()">🔍 Scan Browser Storage</button>
+  </div>
+  <div id="scan-result">Click Scan to check what data exists in this browser.</div>
+</div>
+
+<div class="card" id="records-card" style="display:none">
+  <h2>Step 2 — Your Records Found</h2>
+  <div id="records-summary"></div>
+  <div style="margin-top:1rem;overflow-x:auto">
+    <table id="records-table">
+      <thead><tr><th>Type</th><th>Number</th><th>Date</th><th>Client / Description</th><th class="amount">Amount</th></tr></thead>
+      <tbody id="records-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card" id="export-card" style="display:none">
+  <h2>Step 3 — Export & Backup</h2>
+  <p style="font-size:.84rem;color:#6b7a96;margin-bottom:.75rem">Download your data now before anything else. Keep this file safe.</p>
+  <div class="row">
+    <button class="btn btn-green" onclick="exportJSON()">⬇ Download Full Backup (.json)</button>
+    <button class="btn btn-navy" onclick="exportCSV()">⬇ Download CSV</button>
+  </div>
+</div>
+
+<div class="card" id="restore-card" style="display:none">
+  <h2>Step 4 — Restore to Main App</h2>
+  <p style="font-size:.84rem;color:#6b7a96;margin-bottom:.75rem">This will write the recovered data back under <code>vst_records</code> so the main app can read it again.</p>
+  <div class="row">
+    <button class="btn btn-green" onclick="restoreToApp()">✅ Restore Data to Main App</button>
+  </div>
+  <div id="restore-result"></div>
+</div>
+
+<div class="card">
+  <h2>🔄 Restore from Backup File</h2>
+  <p style="font-size:.84rem;color:#6b7a96;margin-bottom:.75rem">If you have a previously downloaded backup file, load it here to restore all records.</p>
+  <div class="row">
+    <input type="file" id="backup-file" accept=".json" style="padding:.5rem;border:1.5px solid #dce3ef;border-radius:8px;font-family:inherit">
+    <button class="btn btn-navy" onclick="loadFromFile()">📂 Load & Restore from File</button>
+  </div>
+  <div id="file-result"></div>
+</div>
+
+<div class="card">
+  <h2>🛠 Raw Storage Inspector</h2>
+  <p style="font-size:.84rem;color:#6b7a96;margin-bottom:.75rem">View all keys currently in localStorage for this page origin.</p>
+  <button class="btn btn-navy" onclick="showRaw()">Show All localStorage Keys</button>
+  <pre id="raw-output" style="margin-top:.75rem;display:none"></pre>
+</div>
+
+<script>
+var foundRecords = [];
+var foundCounters = {};
+
+// All possible key names used across all versions of the app
+var RECORD_KEYS = ['vst_records', 'records', 'vst_data', 'vstRecords', 'vst-records'];
+var COUNTER_KEYS = ['vst_counters', 'counters', 'vst_counter', 'vstCounters'];
+
+function scanAll() {
+  var result = document.getElementById('scan-result');
+  result.innerHTML = 'Scanning...';
+
+  var allRecords = [];
+  var allCounters = {};
+  var foundKeys = [];
+  var triedKeys = [];
+
+  // Try all known key names
+  RECORD_KEYS.forEach(function(key) {
+    triedKeys.push(key);
+    var raw = localStorage.getItem(key);
+    if(raw) {
+      try {
+        var parsed = JSON.parse(raw);
+        if(Array.isArray(parsed) && parsed.length > 0) {
+          foundKeys.push(key);
+          // Merge, avoid duplicates by id
+          parsed.forEach(function(r) {
+            if(!allRecords.find(function(x){ return x.id === r.id; })) {
+              allRecords.push(r);
+            }
+          });
+        }
+      } catch(e) { console.warn('Parse error for key', key, e); }
+    }
+  });
+
+  COUNTER_KEYS.forEach(function(key) {
+    var raw = localStorage.getItem(key);
+    if(raw) {
+      try { allCounters = JSON.parse(raw); } catch(e) {}
+    }
+  });
+
+  // Also scan ALL keys in localStorage for anything that looks like VST data
+  for(var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if(RECORD_KEYS.indexOf(k) === -1) { // not already checked
+      var raw = localStorage.getItem(k);
+      if(raw && raw.length > 50) {
+        try {
+          var parsed = JSON.parse(raw);
+          if(Array.isArray(parsed) && parsed.length > 0) {
+            var firstItem = parsed[0];
+            // Check if it looks like VST data
+            if(firstItem && (firstItem.kind === 'doc' || firstItem.kind === 'expense' ||
+               firstItem.type === 'Quotation' || firstItem.type === 'Invoice' ||
+               firstItem.clientName !== undefined || firstItem.grand !== undefined)) {
+              foundKeys.push(k + ' (auto-detected)');
+              parsed.forEach(function(r) {
+                if(!allRecords.find(function(x){ return x.id === r.id; })) {
+                  allRecords.push(r);
+                }
+              });
+            }
+          }
+        } catch(e) {}
+      }
+    }
+  }
+
+  foundRecords = allRecords;
+  foundCounters = allCounters;
+
+  var docs = allRecords.filter(function(r){ return r.kind === 'doc' || r.type === 'Quotation' || r.type === 'Invoice'; });
+  var exps = allRecords.filter(function(r){ return r.kind === 'expense'; });
+  var invoices = docs.filter(function(r){ return r.type === 'Invoice'; });
+  var quotations = docs.filter(function(r){ return r.type === 'Quotation'; });
+
+  if(allRecords.length === 0) {
+    result.innerHTML =
+      '<span class="notfound">❌ No VST records found in this browser.</span><br><br>' +
+      '<b>This means one of:</b><ul style="margin:.5rem 0 0 1.5rem;font-size:.84rem;line-height:1.8">' +
+      '<li>You are on a different browser or device than where data was saved</li>' +
+      '<li>Browser data was cleared (Settings → Clear browsing data)</li>' +
+      '<li>Data was saved in a Private/Incognito window (which clears on close)</li>' +
+      '<li>The app was opened from a different URL (different origin)</li>' +
+      '</ul><br>' +
+      '<b>Tried keys:</b> ' + triedKeys.join(', ') + '<br>' +
+      '<b>All localStorage keys on this page:</b> ' + localStorage.length + ' total';
+    document.getElementById('records-card').style.display = 'none';
+    document.getElementById('export-card').style.display = 'none';
+    document.getElementById('restore-card').style.display = 'none';
+    return;
+  }
+
+  result.innerHTML =
+    '<span class="found">✅ Data found!</span> Found in keys: <b>' + foundKeys.join(', ') + '</b><br><br>' +
+    '<span class="stat">' + allRecords.length + ' total records</span>' +
+    '<span class="stat info">' + invoices.length + ' invoices</span>' +
+    '<span class="stat info">' + quotations.length + ' quotations</span>' +
+    '<span class="stat warn">' + exps.length + ' expenses</span>';
+
+  // Show records table
+  var tbody = document.getElementById('records-tbody');
+  tbody.innerHTML = '';
+  var sorted = allRecords.slice().sort(function(a,b){
+    var da = a.date || a.savedAt || '';
+    var db = b.date || b.savedAt || '';
+    return db.localeCompare(da);
+  });
+  sorted.forEach(function(r) {
+    var tr = document.createElement('tr');
+    var type = r.type || (r.kind === 'expense' ? 'Expense' : '?');
+    var cls = type === 'Invoice' ? 't-inv' : type === 'Quotation' ? 't-quot' : 't-exp';
+    var client = r.clientName || r.desc || r.description || '—';
+    var amount = r.grand || r.amount || r.grand_total || 0;
+    var num = r.number || r.document_number || r.id || '—';
+    var date = r.date || (r.savedAt ? r.savedAt.slice(0,10) : '—');
+    tr.innerHTML =
+      '<td><span class="doc-type ' + cls + '">' + type + '</span></td>' +
+      '<td style="font-family:monospace;font-size:.78rem">' + num + '</td>' +
+      '<td>' + date + '</td>' +
+      '<td>' + client + '</td>' +
+      '<td class="amount">Rs.' + parseFloat(amount).toFixed(2) + '</td>';
+    tbody.appendChild(tr);
+  });
+
+  var sumCard = document.getElementById('records-summary');
+  var totalRev = invoices.reduce(function(a,r){ return a+(r.grand||r.grand_total||0); }, 0);
+  var totalExp = exps.reduce(function(a,e){ return a+(e.amount||0); }, 0);
+  sumCard.innerHTML =
+    '<span class="stat">Total: ' + allRecords.length + ' records</span>' +
+    '<span class="stat info">Invoices: ' + invoices.length + ' (Rs.' + totalRev.toFixed(0) + ')</span>' +
+    '<span class="stat info">Quotations: ' + quotations.length + '</span>' +
+    '<span class="stat warn">Expenses: ' + exps.length + ' (Rs.' + totalExp.toFixed(0) + ')</span>';
+
+  document.getElementById('records-card').style.display = 'block';
+  document.getElementById('export-card').style.display = 'block';
+  document.getElementById('restore-card').style.display = 'block';
+}
+
+function exportJSON() {
+  var data = {
+    app: 'VSTv3',
+    exportedAt: new Date().toISOString(),
+    exportedBy: 'VST Recovery Tool',
+    records: foundRecords,
+    counters: foundCounters
+  };
+  var blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'VST-RECOVERY-' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  alert('✅ Backup downloaded! Keep this file safe — you can use it to restore data at any time.');
+}
+
+function exportCSV() {
+  var rows = [['Type','Number','Date','Client/Description','Amount','Vendor','Category','Payment','Status']];
+  foundRecords.forEach(function(r) {
+    rows.push([
+      r.type || (r.kind==='expense'?'Expense':'Unknown'),
+      r.number || r.document_number || r.id || '',
+      r.date || (r.savedAt ? r.savedAt.slice(0,10) : ''),
+      r.clientName || r.desc || r.description || '',
+      r.grand || r.amount || r.grand_total || 0,
+      r.vendor || r.clientPhone || '',
+      r.category || '',
+      r.payment || '',
+      r.status || ''
+    ]);
+  });
+  var csv = rows.map(function(row){
+    return row.map(function(v){ return '"' + String(v||'').replace(/"/g,'""') + '"'; }).join(',');
+  }).join('\n');
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'VST-RECOVERY-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function restoreToApp() {
+  if(foundRecords.length === 0) {
+    alert('No records to restore. Run Scan first.');
+    return;
+  }
+  if(!confirm('This will write ' + foundRecords.length + ' records to vst_records in localStorage so the main app can read them. Continue?')) return;
+  try {
+    localStorage.setItem('vst_records', JSON.stringify(foundRecords));
+    if(foundCounters && Object.keys(foundCounters).length) {
+      localStorage.setItem('vst_counters', JSON.stringify(foundCounters));
+    }
+    document.getElementById('restore-result').innerHTML =
+      '<br><span style="color:#0f6e56;font-weight:600">✅ Done! ' + foundRecords.length + ' records restored to vst_records.</span><br>' +
+      '<span style="font-size:.82rem;color:#6b7a96">Now open the main app (index.html) and your data should appear. Download a backup first if you have not already.</span>';
+  } catch(e) {
+    document.getElementById('restore-result').innerHTML =
+      '<br><span style="color:#c0392b;font-weight:600">❌ Error: ' + e.message + '</span>';
+  }
+}
+
+function loadFromFile() {
+  var file = document.getElementById('backup-file').files[0];
+  if(!file) { alert('Select a backup .json file first'); return; }
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var parsed = JSON.parse(e.target.result);
+      var recs = parsed.records || (Array.isArray(parsed) ? parsed : []);
+      var cnts = parsed.counters || {};
+      if(recs.length === 0) { alert('No records found in this file.'); return; }
+      if(!confirm('Restore ' + recs.length + ' records from file? This will MERGE with any existing local data.')) return;
+
+      // Merge with existing
+      var existing = [];
+      try { existing = JSON.parse(localStorage.getItem('vst_records') || '[]'); } catch(e2){}
+      var existingIds = new Set(existing.map(function(r){ return r.id; }));
+      var merged = existing.slice();
+      var added = 0;
+      recs.forEach(function(r) {
+        if(!existingIds.has(r.id)) { merged.push(r); added++; }
+      });
+      localStorage.setItem('vst_records', JSON.stringify(merged));
+
+      // Merge counters (take higher value)
+      var existingC = {};
+      try { existingC = JSON.parse(localStorage.getItem('vst_counters') || '{}'); } catch(e3){}
+      ['Q','INV','EXP'].forEach(function(k) {
+        existingC[k] = Math.max(existingC[k]||1, cnts[k]||1);
+      });
+      localStorage.setItem('vst_counters', JSON.stringify(existingC));
+
+      document.getElementById('file-result').innerHTML =
+        '<br><span style="color:#0f6e56;font-weight:700">✅ Restored! Added ' + added + ' new records (' + merged.length + ' total).</span><br>' +
+        '<span style="font-size:.82rem;color:#6b7a96">Now open the main app — all records should be visible.</span>';
+
+      // Re-scan to show updated state
+      scanAll();
+    } catch(err) {
+      document.getElementById('file-result').innerHTML =
+        '<br><span style="color:#c0392b;font-weight:600">❌ Invalid file: ' + err.message + '</span>';
+    }
+  };
+  reader.readAsText(file);
+}
+
+function showRaw() {
+  var out = document.getElementById('raw-output');
+  out.style.display = 'block';
+  var lines = [];
+  lines.push('Total keys in localStorage: ' + localStorage.length);
+  lines.push('---');
+  for(var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    var v = localStorage.getItem(k);
+    var preview = v ? v.slice(0,120) + (v.length > 120 ? '...' : '') : '(empty)';
+    lines.push('KEY: "' + k + '" (' + (v?v.length:0) + ' chars)');
+    lines.push('VAL: ' + preview);
+    lines.push('');
+  }
+  if(localStorage.length === 0) lines.push('(localStorage is empty on this page origin)');
+  out.textContent = lines.join('\n');
+}
+
+// Auto-scan on load
+window.onload = function() { scanAll(); };
+</script>
+</body>
+</html>
