@@ -433,6 +433,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- ═══ RECORDS TAB ═══ -->
   <div class="page" id="tab-records">
+    <!-- RECOVERY BANNER -->
+    <div id="recovery-banner" style="display:none;background:linear-gradient(135deg,#fff3e0,#fce4ec);border:1.5px solid #ffab40;border-radius:12px;padding:1rem 1.2rem;margin-bottom:1rem">
+      <div style="font-size:.95rem;font-weight:700;color:#e65100;margin-bottom:.3rem">&#9888; Data Recovery Available</div>
+      <div style="font-size:.82rem;color:#bf360c;margin-bottom:.75rem" id="recovery-msg">Found records from a previous session that are not in the current app.</div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm" style="background:#e65100;color:#fff" onclick="mergeRecoveredData()">&#10003; Merge Recovered Records</button>
+        <button class="btn bo btn-sm" onclick="dismissRecovery()">Dismiss</button>
+      </div>
+    </div>
     <!-- Drive sync info bar (shown when connected) -->
     <div class="drive-info" id="drive-info-bar" style="display:none">
       <div class="di-icon">&#9729;</div>
@@ -546,7 +555,7 @@ async function loadLogo() {
 }
 
 // CONFIG — set your Google OAuth Client ID here
-const GOOGLE_CLIENT_ID = 'YOUR_GOOGLE_CLIENT_ID';
+const GOOGLE_CLIENT_ID = '865631451394-h0nlhimmcjmmitbsambntrbgf32s8qip.apps.googleusercontent.com';
 const FOLDER_QUOT = 'VST-Quotations';
 const FOLDER_BILL = 'VST-Bills';
 const DATA_FILE   = 'VST-Records.json';
@@ -1328,10 +1337,163 @@ async function getOrCreateFolder(name){
   return (await cr.json()).id;
 }
 
+// ═══════════════════════════════════════════════════════
+// DATA RECOVERY — scans all possible old keys & origins
+// ═══════════════════════════════════════════════════════
+var recoveredExtra = [];
+
+function runRecovery() {
+  // All key names ever used across every version of this app
+  var ALL_KEYS = [
+    'vst_records', 'records', 'vst_data', 'vstRecords', 'vst-records',
+    'vst_invoices', 'invoices', 'vst_expenses', 'expenses',
+    'app_records', 'billing_records', 'securetech_records'
+  ];
+
+  var found = [];
+  var foundKeys = [];
+
+  ALL_KEYS.forEach(function(key) {
+    var raw = localStorage.getItem(key);
+    if(!raw) return;
+    try {
+      var parsed = JSON.parse(raw);
+      if(!Array.isArray(parsed) || parsed.length === 0) return;
+      var first = parsed[0];
+      // Validate it looks like VST data
+      var isVST = first && (
+        first.kind === 'doc' || first.kind === 'expense' ||
+        first.type === 'Quotation' || first.type === 'Invoice' ||
+        typeof first.clientName !== 'undefined' ||
+        typeof first.grand !== 'undefined' ||
+        typeof first.amount !== 'undefined' ||
+        typeof first.document_number !== 'undefined'
+      );
+      if(isVST) {
+        foundKeys.push(key);
+        parsed.forEach(function(r) {
+          if(!found.find(function(x){ return x.id === r.id; })) {
+            found.push(r);
+          }
+        });
+      }
+    } catch(e) {}
+  });
+
+  // Also scan ALL localStorage keys for anything that looks like VST data
+  for(var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if(ALL_KEYS.indexOf(k) !== -1) continue; // already checked
+    var raw2 = localStorage.getItem(k);
+    if(!raw2 || raw2.length < 30) continue;
+    try {
+      var parsed2 = JSON.parse(raw2);
+      if(!Array.isArray(parsed2) || parsed2.length === 0) continue;
+      var f2 = parsed2[0];
+      var isVST2 = f2 && (
+        f2.kind === 'doc' || f2.kind === 'expense' ||
+        f2.type === 'Quotation' || f2.type === 'Invoice' ||
+        (typeof f2.clientName !== 'undefined' && typeof f2.grand !== 'undefined')
+      );
+      if(isVST2) {
+        foundKeys.push(k);
+        parsed2.forEach(function(r) {
+          if(!found.find(function(x){ return x.id === r.id; })) {
+            found.push(r);
+          }
+        });
+      }
+    } catch(e2) {}
+  }
+
+  // Also try sessionStorage
+  try {
+    for(var j = 0; j < sessionStorage.length; j++) {
+      var sk = sessionStorage.key(j);
+      var sv = sessionStorage.getItem(sk);
+      if(!sv || sv.length < 30) continue;
+      try {
+        var sp = JSON.parse(sv);
+        if(Array.isArray(sp) && sp.length > 0) {
+          var sf = sp[0];
+          if(sf && (sf.kind === 'doc' || sf.kind === 'expense' || sf.type === 'Quotation' || sf.type === 'Invoice')) {
+            sp.forEach(function(r) {
+              if(!found.find(function(x){ return x.id === r.id; })) found.push(r);
+            });
+          }
+        }
+      } catch(e3) {}
+    }
+  } catch(e4) {}
+
+  // Now find records NOT already in current records array
+  var currentIds = new Set(records.map(function(r){ return r.id; }));
+  var newOnes = found.filter(function(r){ return !currentIds.has(r.id); });
+
+  console.log('[VST Recovery] Keys scanned:', ALL_KEYS.length + ' + ' + (localStorage.length - ALL_KEYS.length) + ' auto');
+  console.log('[VST Recovery] Found:', found.length, 'total,', newOnes.length, 'new (not in current app)');
+  console.log('[VST Recovery] Keys with data:', foundKeys);
+
+  if(newOnes.length > 0) {
+    recoveredExtra = newOnes;
+    var docs = newOnes.filter(function(r){ return r.kind === 'doc' || r.type === 'Quotation' || r.type === 'Invoice'; });
+    var exps = newOnes.filter(function(r){ return r.kind === 'expense'; });
+    document.getElementById('recovery-msg').textContent =
+      'Found ' + newOnes.length + ' records from previous sessions not in the current app — ' +
+      docs.length + ' quotations/invoices, ' + exps.length + ' expenses. Tap Merge to restore them.';
+    document.getElementById('recovery-banner').style.display = 'block';
+
+    // Also auto-merge silently if current records is empty or has very few
+    if(records.length <= 1) {
+      mergeRecoveredData(true);
+    }
+  }
+}
+
+function mergeRecoveredData(silent) {
+  if(recoveredExtra.length === 0) return;
+  var currentIds = new Set(records.map(function(r){ return r.id; }));
+  var added = 0;
+  recoveredExtra.forEach(function(r) {
+    if(!currentIds.has(r.id)) {
+      records.push(r);
+      added++;
+    }
+  });
+  // Sort by date descending
+  records.sort(function(a, b) {
+    var da = a.date || (a.savedAt ? a.savedAt.slice(0,10) : '');
+    var db = b.date || (b.savedAt ? b.savedAt.slice(0,10) : '');
+    return db.localeCompare(da);
+  });
+  save();
+  recoveredExtra = [];
+  document.getElementById('recovery-banner').style.display = 'none';
+  if(!silent) {
+    toast('Recovered ' + added + ' records merged successfully!', 'ok');
+  } else {
+    toast('Auto-recovered ' + added + ' records from previous sessions!', 'ok');
+  }
+  // Refresh views if on records tab
+  renderRecords();
+  renderExpenses();
+}
+
+function dismissRecovery() {
+  document.getElementById('recovery-banner').style.display = 'none';
+  toast('Dismissed. Tap "Records" tab again to re-check.', '');
+}
+
 // INIT
 initDocNum();
 document.getElementById('e-date').value = today();
 if(!document.getElementById('items-body').children.length) addItem();
+loadLogo();
+
+// Run recovery scan after short delay (so UI loads first)
+setTimeout(function() {
+  runRecovery();
+}, 800);
 </script>
 </body>
 </html>
